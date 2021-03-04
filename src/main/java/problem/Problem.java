@@ -130,9 +130,12 @@ public class Problem {
      *
      * @param gl переменная OpenGL для рисования
      */
-    public void render(GL2 gl) {
-        for (Point point : points) {
-            point.render(gl);
-        }
+    public void render(GL2 gl)
+    {
+        //Figures.renderPoint(gl, new Vector2(0,0.5), 10000);
+        //Figures.renderLine(gl, new Vector2(1,1), new Vector2(-1, -1), 1);
+        //Figures.renderTriangle(gl, new  Vector2(1,1), new Vector2(-1, -1), new Vector2(0, 0.5), false);
+        //Figures.renderTriangle(gl, new  Vector2(0,-0.5), new Vector2(0.5, 0), new Vector2(0, 0.5), new Vector2(-0.5, 0), false);
+        Figures.renderCircle(gl, new Vector2(0, 0), 0.5, false);
     }
 }
