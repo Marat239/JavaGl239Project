@@ -140,6 +140,7 @@ public class Problem {
         WideRay.renderWideRay(gl, new Vector2(0.5, 0.5), new Vector2(0.4, 0.4));
         WideRay.renderWideRay(gl, new Vector2(-0.5, 0.5), new Vector2(0.4, 0.4));
         Figures.renderTriangle(gl, new Vector2(0, 1), new Vector2(0.7, 0.7), new Vector2(-0.7, -0.7), false);
+        WideRay.renderWideRay(gl, new Vector2(-0.5, 0.7), new Vector2(0.1, 0.3));
 
     }
 }
