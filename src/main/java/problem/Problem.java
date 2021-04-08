@@ -7,6 +7,7 @@ import java.util.Scanner;
 
 /**
  * Класс задачи
+ * 
  */
 public class Problem {
     /**
