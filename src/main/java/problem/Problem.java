@@ -136,6 +136,11 @@ public class Problem {
         //Figures.renderLine(gl, new Vector2(1,1), new Vector2(-1, -1), 1);
         //Figures.renderTriangle(gl, new  Vector2(1,1), new Vector2(-1, -1), new Vector2(0, 0.5), false);
         //Figures.renderTriangle(gl, new  Vector2(0,-0.5), new Vector2(0.5, 0), new Vector2(0, 0.5), new Vector2(-0.5, 0), false);
-        Figures.renderCircle(gl, new Vector2(0, 0), 0.5, false);
+        //Figures.renderCircle(gl, new Vector2(0, 0), 0.5, false);
+        WideRay.renderWideRay(gl, new Vector2(0.5, 0.5), new Vector2(0.4, 0.4));
+        WideRay.renderWideRay(gl, new Vector2(-0.5, 0.5), new Vector2(0.4, 0.4));
+        Figures.renderTriangle(gl, new Vector2(0, 1), new Vector2(0.7, 0.7), new Vector2(-0.7, -0.7), false);
+        WideRay.renderWideRay(gl, new Vector2(-0.5, 0.7), new Vector2(0.1, 0.3));
+
     }
 }
