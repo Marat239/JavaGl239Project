@@ -4,6 +4,7 @@ class Vector2
 {
     double x;
     double y;
+
     public Vector2()
     {
         x = 1;
@@ -104,12 +105,12 @@ class Vector2
         return x * v2.x + y * v2.y;
     }
 
-    public static double mult(Vector2 v2,  Vector2 v3)
+    public static double mult(Vector2 v2, Vector2 v3)
     {
         return v3.x * v2.x + v3.y * v2.y;
     }
 
-    public static Vector2 mult(Vector2 v2,  double r)
+    public static Vector2 mult(Vector2 v2, double r)
     {
         Vector2 mult = new Vector2(v2.x * r, v2.y * r);
         return mult;
@@ -117,7 +118,7 @@ class Vector2
 
     public void normalize()
     {
-        if(x == 0 && y == 0)
+        if (x == 0 && y == 0)
         {
             x = 0;
             y = 0;
@@ -131,7 +132,7 @@ class Vector2
 
     public Vector2 norm()
     {
-        if(x == 0 && y == 0)
+        if (x == 0 && y == 0)
         {
             return new Vector2(0, 0);
         }

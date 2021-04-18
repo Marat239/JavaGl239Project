@@ -1,26 +1,27 @@
 package problem;
 
 import javax.media.opengl.GL2;
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
  * Класс задачи
- * 
  */
-public class Problem {
+public class Problem
+{
     /**
      * текст задачи
      */
-    public static final String PROBLEM_TEXT = "ПОСТАНОВКА ЗАДАЧИ:\n" +
-            "Заданы два множества точек в пространстве.\n" +
-            "Требуется построить пересечения и разность этих множеств";
+    public static final String PROBLEM_TEXT = "ПОСТАНОВКА ЗАДАЧИ:\n" + "Заданы два множества точек в пространстве.\n" + "Требуется построить пересечения и разность этих множеств";
 
     /**
      * заголовок окна
      */
-    public static final String PROBLEM_CAPTION = "Итоговый проект ученика 10-7 Иванова Ивана";
+    public static final String PROBLEM_CAPTION = "Итоговый проект ученика 10-7 Михайлова Марата";
 
     /**
      * путь к файлу
@@ -35,7 +36,8 @@ public class Problem {
     /**
      * Конструктор класса задачи
      */
-    public Problem() {
+    public Problem()
+    {
         points = new ArrayList<>();
     }
 
@@ -46,7 +48,8 @@ public class Problem {
      * @param y      координата Y точки
      * @param setVal номер множества
      */
-    public void addPoint(double x, double y, int setVal) {
+    public void addPoint(double x, double y, int setVal)
+    {
         Point point = new Point(x, y, setVal);
         points.add(point);
     }
@@ -54,14 +57,19 @@ public class Problem {
     /**
      * Решить задачу
      */
-    public void solve() {
+    public void solve()
+    {
         // перебираем пары точек
-        for (Point p : points) {
-            for (Point p2 : points) {
+        for (Point p : points)
+        {
+            for (Point p2 : points)
+            {
                 // если точки являются разными
-                if (p != p2) {
+                if (p != p2)
+                {
                     // если координаты у них совпадают
-                    if (Math.abs(p.x - p2.x) < 0.0001 && Math.abs(p.y - p2.y) < 0.0001) {
+                    if (Math.abs(p.x - p2.x) < 0.0001 && Math.abs(p.y - p2.y) < 0.0001)
+                    {
                         p.isSolution = true;
                         p2.isSolution = true;
                     }
@@ -73,13 +81,16 @@ public class Problem {
     /**
      * Загрузить задачу из файла
      */
-    public void loadFromFile() {
+    public void loadFromFile()
+    {
         points.clear();
-        try {
+        try
+        {
             File file = new File(FILE_NAME);
             Scanner sc = new Scanner(file);
             // пока в файле есть непрочитанные строки
-            while (sc.hasNextLine()) {
+            while (sc.hasNextLine())
+            {
                 double x = sc.nextDouble();
                 double y = sc.nextDouble();
                 int setVal = sc.nextInt();
@@ -87,7 +98,8 @@ public class Problem {
                 Point point = new Point(x, y, setVal);
                 points.add(point);
             }
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
             System.out.println("Ошибка чтения из файла: " + ex);
         }
     }
@@ -95,14 +107,18 @@ public class Problem {
     /**
      * Сохранить задачу в файл
      */
-    public void saveToFile() {
-        try {
+    public void saveToFile()
+    {
+        try
+        {
             PrintWriter out = new PrintWriter(new FileWriter(FILE_NAME));
-            for (Point point : points) {
+            for (Point point : points)
+            {
                 out.printf("%.2f %.2f %d\n", point.x, point.y, point.setNumber);
             }
             out.close();
-        } catch (IOException ex) {
+        } catch (IOException ex)
+        {
             System.out.println("Ошибка записи в файл: " + ex);
         }
     }
@@ -112,8 +128,10 @@ public class Problem {
      *
      * @param n кол-во точек
      */
-    public void addRandomPoints(int n) {
-        for (int i = 0; i < n; i++) {
+    public void addRandomPoints(int n)
+    {
+        for (int i = 0; i < n; i++)
+        {
             Point p = Point.getRandomPoint();
             points.add(p);
         }
@@ -122,7 +140,8 @@ public class Problem {
     /**
      * Очистить задачу
      */
-    public void clear() {
+    public void clear()
+    {
         points.clear();
     }
 
@@ -138,10 +157,13 @@ public class Problem {
         //Figures.renderTriangle(gl, new  Vector2(1,1), new Vector2(-1, -1), new Vector2(0, 0.5), false);
         //Figures.renderTriangle(gl, new  Vector2(0,-0.5), new Vector2(0.5, 0), new Vector2(0, 0.5), new Vector2(-0.5, 0), false);
         //Figures.renderCircle(gl, new Vector2(0, 0), 0.5, false);
-        WideRay.renderWideRay(gl, new Vector2(0.5, 0.5), new Vector2(0.4, 0.4));
-        WideRay.renderWideRay(gl, new Vector2(-0.5, 0.5), new Vector2(0.4, 0.4));
-        Figures.renderTriangle(gl, new Vector2(0, 1), new Vector2(0.7, 0.7), new Vector2(-0.7, -0.7), false);
-        WideRay.renderWideRay(gl, new Vector2(-0.5, 0.7), new Vector2(0.1, 0.3));
 
+        WideRay.renderWideRay(gl, new Vector2(0.5, 0.5), new Vector2(0.4, 0.4));
+
+        WideRay.renderWideRay(gl, new Vector2(-0.5, 0.5), new Vector2(0.4, 0.4));
+
+        Figures.renderTriangle(gl, new Vector2(0, 1), new Vector2(0.7, 0.7), new Vector2(-0.7, -0.7), false);
+
+        WideRay.renderWideRay(gl, new Vector2(-0.5, 0.7), new Vector2(0.1, 0.3));
     }
 }

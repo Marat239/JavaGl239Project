@@ -5,12 +5,16 @@ import problem.Problem;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * Класс формы приложения
  */
-public class Form extends JFrame {
+public class Form extends JFrame
+{
     /**
      * панель для отображения OpenGL
      */
@@ -40,7 +44,8 @@ public class Form extends JFrame {
     /**
      * Конструктор формы
      */
-    private Form() {
+    private Form()
+    {
         super(Problem.PROBLEM_CAPTION);
         // инициализируем OpenGL
         renderer = new RendererGL();
@@ -54,9 +59,11 @@ public class Form extends JFrame {
         // показываем форму
         setVisible(true);
         // обработчик зарытия формы
-        this.addWindowListener(new WindowAdapter() {
+        this.addWindowListener(new WindowAdapter()
+        {
             @Override
-            public void windowClosing(WindowEvent e) {
+            public void windowClosing(WindowEvent e)
+            {
                 new Thread(() -> {
                     renderer.close();
                     timer.stop();
@@ -65,9 +72,11 @@ public class Form extends JFrame {
             }
         });
         // тинициализация таймера, срабатывающего раз в 100 мсек
-        timer = new Timer(100, new ActionListener() {
+        timer = new Timer(100, new ActionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 onTime();
             }
         });
@@ -78,49 +87,62 @@ public class Form extends JFrame {
     /**
      * Инициализация виджетов
      */
-    private void initWidgets() {
+    private void initWidgets()
+    {
         // задаём текст полю описания задачи
         problemText.setText("<html>" + Problem.PROBLEM_TEXT.replaceAll("\n", "<br>"));
         // делаем первое радио выбранным
         radioButton1.setSelected(true);
         radioButton2.setSelected(false);
 
-        addPoint.addActionListener(new ActionListener() {
+        addPoint.addActionListener(new ActionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 double x = Double.parseDouble(xPointField.getText());
                 double y = Double.parseDouble(yPointField.getText());
                 int setVal = radioButton1.isSelected() ? Point.SET_1 : Point.SET_2;
                 renderer.problem.addPoint(x, y, setVal);
             }
         });
-        randomBtn.addActionListener(new ActionListener() {
+        randomBtn.addActionListener(new ActionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 renderer.problem.addRandomPoints(Integer.parseInt(pointCntField.getText()));
             }
         });
-        loadFromFileBtn.addActionListener(new ActionListener() {
+        loadFromFileBtn.addActionListener(new ActionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 renderer.problem.loadFromFile();
             }
         });
-        saveToFileBtn.addActionListener(new ActionListener() {
+        saveToFileBtn.addActionListener(new ActionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 renderer.problem.saveToFile();
             }
         });
-        clearBtn.addActionListener(new ActionListener() {
+        clearBtn.addActionListener(new ActionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 renderer.problem.clear();
             }
         });
-        solveBtn.addActionListener(new ActionListener() {
+        solveBtn.addActionListener(new ActionListener()
+        {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
                 renderer.problem.solve();
             }
         });
@@ -129,7 +151,8 @@ public class Form extends JFrame {
     /**
      * Событие таймера
      */
-    private void onTime() {
+    private void onTime()
+    {
         // события по таймеру
     }
 
@@ -138,7 +161,8 @@ public class Form extends JFrame {
      *
      * @param args аргументы командной строки
      */
-    public static void main(String[] args) {
+    public static void main(String[] args)
+    {
         new Form();
     }
 }

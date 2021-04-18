@@ -10,7 +10,8 @@ import javax.media.opengl.awt.GLCanvas;
 /**
  * Класс рисования OpenGL
  */
-class RendererGL implements GLEventListener {
+class RendererGL implements GLEventListener
+{
     /**
      * то, где рисуется OpenGL-сцена
      */
@@ -27,7 +28,8 @@ class RendererGL implements GLEventListener {
     /**
      * Конструктор класса рисования OpenGL
      */
-    RendererGL() {
+    RendererGL()
+    {
         // создаём OpenGL-профиль
         GLProfile profile = GLProfile.get(GLProfile.GL2);
         // получаем набор возможностей OpenGL по созданному профилю
@@ -46,7 +48,8 @@ class RendererGL implements GLEventListener {
      * @param drawable объект рисования OpenGL
      */
     @Override
-    public void init(GLAutoDrawable drawable) {
+    public void init(GLAutoDrawable drawable)
+    {
         // получаем класс для работы с openGL
         GL2 gl = drawable.getGL().getGL2();
         // задаём тип матриц преобразований
@@ -65,7 +68,8 @@ class RendererGL implements GLEventListener {
      * @param drawable объект рисования OpenGL
      */
     @Override
-    public void display(GLAutoDrawable drawable) {
+    public void display(GLAutoDrawable drawable)
+    {
         // получаем класс для работы с openGL
         GL2 gl = drawable.getGL().getGL2();
         // задаём цвет фона
@@ -82,14 +86,16 @@ class RendererGL implements GLEventListener {
      *
      * @return область рисования
      */
-    GLCanvas getCanvas() {
+    GLCanvas getCanvas()
+    {
         return canvas;
     }
 
     /**
      * Закрыть рисовальщик
      */
-    void close() {
+    void close()
+    {
         animator.stop();
         System.out.println("terminated");
     }
@@ -100,7 +106,8 @@ class RendererGL implements GLEventListener {
      * @param drawable объект рисования OpenGL
      */
     @Override
-    public void dispose(GLAutoDrawable drawable) {
+    public void dispose(GLAutoDrawable drawable)
+    {
         // обработчик закрытия формы
         animator.stop();
     }
@@ -115,10 +122,9 @@ class RendererGL implements GLEventListener {
      * @param height   высота окна
      */
     @Override
-    public void reshape(GLAutoDrawable drawable, int posX, int posY, int width, int height) {
+    public void reshape(GLAutoDrawable drawable, int posX, int posY, int width, int height)
+    {
         // если изменились размеры окна
         // т.к. у нас размеры окна динамически вычисляются в display(), то нам этот метод не нужен
     }
-
-
 }
