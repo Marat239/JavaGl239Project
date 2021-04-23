@@ -392,6 +392,30 @@ public class polygon_tests
         Assert.assertEquals(10, s, Epsilon);
     }
 
+    @Test
+    public void should_compute_intersection_partially_inside()
+    {
+        Point p1 = new Point(5, 3);
+        Point p2 = new Point(3, 7);
+        Point p3 = new Point(8, 3);
+
+        Triangle t = Triangle.create(p1, p2, p3);
+
+        Point p4 = new Point(8, 0);
+        Point p5 = new Point(3, 0);
+
+        WideRay w = new WideRay(p4, p5);
+
+        Polygon intersection = t.getIntersection(w);
+
+        ArrayList<Point> points = new ArrayList<>();
+        points.add(new Point(5,3));
+        points.add(new Point(3,7));
+        points.add(new Point(8,3));
+
+        assertPolygon(points, intersection);
+    }
+
     private void assertPolygon(List<Point> points, Polygon polygon)
     {
         Assert.assertEquals(points.size(), polygon.getVectors().size());

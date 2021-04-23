@@ -54,13 +54,12 @@ public class Polygon
         while (true)
         {
             Crossing c = getNearestCrossing(current, vectors);
+            Vector next = c.getTheRightMost(current);
 
-            if(!polygon.contains(c.Centre))
+            if(inside && !polygon.contains(c.Centre))
             {
                 inside = false;
             }
-
-            Vector next = c.getTheRightMost(current);
 
             if(inside)
             {
@@ -72,6 +71,7 @@ public class Polygon
             {
                 inside = true;
             }
+
 
             if(!visited.add(c.Centre))
             {
@@ -133,7 +133,7 @@ public class Polygon
             }
         }
 
-        double min = InfiniteLen;
+        double min = InfiniteLen + Epsilon;
         Crossing nearest = null;
         for (Crossing cross : crossings.values())
         {

@@ -1,7 +1,7 @@
 package view;
 
 import javafx.application.Application;
-import javafx.event.EventHandler;
+import javafx.event.ActionEvent;
 import javafx.geometry.*;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -22,13 +22,17 @@ public class Main extends Application
 {
     Label clickInfo;
     Surface model;
+    Canvas canvas;
+    TextField numberOfTriangles;
+    TextField numberOfWideRays;
+    TextField filterOverlap;
 
     @Override
     public void start(Stage stage) throws Exception
     {
         model = new Surface();
-        model.generateRandomTriangles(15, 100, 250);
-        model.generateRandomWideRays(10, 50, 100);
+//        model.generateRandomTriangles(15, 100, 250);
+//        model.generateRandomWideRays(10, 50, 100);
 
         Scene scene = createScene();
         stage.setScene(scene);
@@ -39,7 +43,7 @@ public class Main extends Application
     {
         GridPane grid = new GridPane();
 
-        ScrollPane canvas = getCanvasPane(grid);
+        ScrollPane canvas = getCanvasPane();
         Pane control = getControlPanel(grid);
         grid.add(canvas, 0, 0);
         grid.add(control, 1, 0);
@@ -49,36 +53,31 @@ public class Main extends Application
 
         ColumnConstraints col2 = new ColumnConstraints();
         col2.setMinWidth(control.getMinWidth());
-//        col2.setMinWidth(200);
-
-
         grid.getColumnConstraints().addAll(col1, col2);
 
         return new Scene(grid, 1200, 800);
     }
 
-    private ScrollPane getCanvasPane(Pane parent)
+    private ScrollPane getCanvasPane()
     {
-        Canvas canvas = new Canvas();
+        canvas = new Canvas();
         ScrollPane pane = new ScrollPane(canvas);
 
         pane.setContent(canvas);
-
-        draw(pane, canvas);
-
-        EventHandler<? super MouseEvent> canvasClicked;
         canvas.setOnMouseClicked(this::mouseClicked);
+
+        draw();
 
         pane.heightProperty().addListener(evt ->
         {
             canvas.setHeight(pane.getHeight() * 2);
-            draw(pane, canvas);
+            draw();
         });
 
         pane.widthProperty().addListener(evt ->
         {
             canvas.setWidth(pane.getWidth() * 2);
-            draw(pane, canvas);
+            draw();
         });
 
         return pane;
@@ -120,12 +119,12 @@ public class Main extends Application
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 10, 20, 10));
 
-        TextField number = new TextField();
-        number.setMaxWidth(60);
+        numberOfTriangles = new TextField();
+        numberOfTriangles.setMaxWidth(60);
 
         HBox firstLine = new HBox(
                 new Label("Добавить"),
-                number,
+                numberOfTriangles,
                 new Label("треугольников"));
 
         firstLine.setSpacing(10);
@@ -135,6 +134,8 @@ public class Main extends Application
 
         Button execute = new Button("Выполнить");
         Button clear = new Button("Очистить");
+        execute.setOnAction(this::generateTrianglesButtonAction);
+        clear.setOnAction(this::clearTrianglesButtonAction);
 
         clear.prefWidthProperty().bind(execute.widthProperty());
 
@@ -160,18 +161,20 @@ public class Main extends Application
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 10, 20, 10));
 
-        TextField number = new TextField();
-        number.setMaxWidth(60);
+        numberOfWideRays = new TextField();
+        numberOfWideRays.setMaxWidth(60);
 
         HBox firstLine = new HBox(
                 new Label("Добавить"),
-                number,
+                numberOfWideRays,
                 new Label("широких лучей"));
 
         firstLine.setSpacing(10);
         firstLine.setAlignment(Pos.BASELINE_LEFT);
         Button execute = new Button("Выполнить");
         Button clear = new Button("Очистить");
+        execute.setOnAction(this::generateWideRaysButtonAction);
+        clear.setOnAction(this::clearWideRaysButtonAction);
 
         clear.prefWidthProperty().bind(execute.widthProperty());
 
@@ -204,9 +207,14 @@ public class Main extends Application
 
     private TitledPane createInformationPane()
     {
-        HBox solveButtons = new HBox(
-                new Button("Решить задачу"),
-                new Button("Очистить всё"));
+        filterOverlap = new TextField();
+        filterOverlap.setMaxWidth(30);
+        Button solveButton = new Button("Решить задачу");
+        Button clearButton = new Button("Очистить всё");
+        solveButton.setOnAction(this::solveButtonAction);
+        clearButton.setOnAction(this::clearButtonAction);
+
+        HBox solveButtons = new HBox(filterOverlap, solveButton, clearButton);
 
         solveButtons.setSpacing(10);
         solveButtons.setAlignment(Pos.CENTER);
@@ -218,7 +226,9 @@ public class Main extends Application
         zoomButtons.setSpacing(10);
         zoomButtons.setAlignment(Pos.CENTER);
 
+        clickInfo = new Label();
         VBox lines = new VBox(
+                new HBox(new Label("Координаты:"), clickInfo),
                 new Label("Всего тругольников:"),
                 new Label("Всего лучей:"),
                 zoomButtons,
@@ -231,23 +241,60 @@ public class Main extends Application
         return new TitledPane("Основное", lines);
     }
 
-    ArrayList<Triangle> tt = null;
+    private void solveButtonAction(ActionEvent actionEvent)
+    {
+        model.computeIntersections();
+        draw();
+    }
 
-    private void draw(ScrollPane pane, Canvas canvas)
+    private void clearButtonAction(ActionEvent actionEvent)
+    {
+        model.clear();
+        draw();
+    }
+
+    private void clearTrianglesButtonAction(ActionEvent actionEvent)
+    {
+        model.getTriangles().clear();
+        draw();
+    }
+
+    private void generateTrianglesButtonAction(ActionEvent actionEvent)
+    {
+        String text = numberOfTriangles.getText();
+        int n = Integer.parseInt(text);
+        model.generateRandomTriangles(n, 300, 500);
+        draw();
+    }
+
+    private void clearWideRaysButtonAction(ActionEvent actionEvent)
+    {
+        model.getWideRays().clear();
+        draw();
+    }
+
+    private void generateWideRaysButtonAction(ActionEvent actionEvent)
+    {
+        String text = numberOfWideRays.getText();
+        int n = Integer.parseInt(text);
+        model.generateRandomWideRays(n, 50, 250);
+        draw();
+    }
+
+
+    private void draw()
     {
         GraphicsContext gr = canvas.getGraphicsContext2D();
         Bounds bounds = model.getBounds();
 
+        gr.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        gr.setLineWidth(1);
         gr.setStroke(Color.valueOf("#FF00FF"));
         for (Triangle t : model.getTriangles())
         {
             for (Vector v : t.getVectors())
             {
-                gr.strokeLine(
-                        v.From.X - bounds.MinX,
-                        v.From.Y - bounds.MinY,
-                        v.To.X - bounds.MinX,
-                        v.To.Y - bounds.MinY);
+                gr.strokeLine(v.From.X, v.From.Y, v.To.X, v.To.Y);
             }
         }
 
@@ -256,11 +303,74 @@ public class Main extends Application
         {
             for (Vector v : w.getVectors())
             {
-                gr.strokeLine(
-                        v.From.X - bounds.MinX,
-                        v.From.Y - bounds.MinY,
-                        v.To.X - bounds.MinX,
-                        v.To.Y - bounds.MinY);
+                gr.strokeLine(v.From.X, v.From.Y, v.To.X, v.To.Y);
+            }
+        }
+
+        gr.setLineWidth(2);
+        gr.setStroke(Color.valueOf("#FF0000"));
+
+        int filter = -1;
+        if (filterOverlap != null && filterOverlap.getText().length() > 0)
+        {
+            filter = Integer.parseInt(filterOverlap.getText());
+        }
+
+        gr.setFill(Color.valueOf("#FE6F7E20"));
+        for (int j = 0; j < model.getOverlaps().size(); j++)
+        {
+            Overlap o = model.getOverlaps().get(j);
+            if (o == model.getLargestOverlap())
+            {
+                continue;
+            }
+
+            if (filter > -1 && filter != j)
+            {
+                continue;
+            }
+
+            List<Vector> vectors = o.Intersection.getVectors();
+            double[] xx = new double[vectors.size()];
+            double[] yy = new double[vectors.size()];
+            for (int i = 0; i < vectors.size(); i++)
+            {
+                var v = vectors.get(i);
+
+                xx[i] = v.From.X;
+                yy[i] = v.From.Y;
+            }
+
+            gr.fillPolygon(xx, yy, vectors.size());
+
+            for (int i = 0; i < vectors.size(); i++)
+            {
+                var v = vectors.get(i);
+                gr.strokeLine(v.From.X, v.From.Y, v.To.X, v.To.Y);
+            }
+        }
+
+        gr.setFill(Color.valueOf("#FE6A76"));
+        Overlap o = model.getLargestOverlap();
+        if(o != null)
+        {
+            List<Vector> vectors = o.Intersection.getVectors();
+            double[] xx = new double[vectors.size()];
+            double[] yy = new double[vectors.size()];
+            for (int i = 0; i < vectors.size(); i++)
+            {
+                var v = vectors.get(i);
+
+                xx[i] = v.From.X;
+                yy[i] = v.From.Y;
+            }
+
+            gr.fillPolygon(xx, yy, vectors.size());
+
+            for (int i = 0; i < vectors.size(); i++)
+            {
+                var v = vectors.get(i);
+                gr.strokeLine(v.From.X, v.From.Y, v.To.X, v.To.Y);
             }
         }
 

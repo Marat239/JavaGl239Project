@@ -51,6 +51,11 @@ public class Vector
         double cos = (dx1 * dx2 + dy1 * dy2) / len() / v.len();
         double k = -(dx1 * dy2 - dx2 * dy1);
 
+        if(Math.abs(k) < Epsilon)
+        {
+            return 0;
+        }
+
         return Math.acos(cos) / Math.PI * 180 * (k >= 0 ? 1 : -1);
     }
 

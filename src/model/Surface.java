@@ -1,7 +1,6 @@
 package model;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import static model.Shared.InfiniteLen;
@@ -11,6 +10,7 @@ public class Surface
     private final ArrayList<Triangle> _triangles = new ArrayList<>();
     private final ArrayList<WideRay> _wideRays = new ArrayList<>();
     private final ArrayList<Overlap> _overlaps = new ArrayList<>();
+    private Overlap _largest = null;
 
     public void add(Triangle t)
     {
@@ -37,6 +37,11 @@ public class Surface
         return _overlaps;
     }
 
+    public Overlap getLargestOverlap()
+    {
+        return _largest;
+    }
+
     public List<Triangle> generateRandomTriangles(int n, int min, int max)
     {
         for (int i = 0; i < n; i++)
@@ -57,7 +62,7 @@ public class Surface
         return getWideRays();
     }
 
-    public void computeIntersections(int n)
+    public void computeIntersections()
     {
         _overlaps.clear();
         for (Triangle t : getTriangles())
@@ -69,6 +74,15 @@ public class Surface
                 {
                     _overlaps.add(new Overlap(t, w, p, p.square()));
                 }
+            }
+        }
+
+        _largest = null;
+        for (Overlap o : _overlaps)
+        {
+            if(_largest == null || _largest.Square < o.Square)
+            {
+                _largest = o;
             }
         }
     }
@@ -109,19 +123,12 @@ public class Surface
         return bb;
     }
 
-    public static class Overlap
+    public void clear()
     {
-        public Triangle Triangle;
-        public WideRay WideRay;
-        public double Square;
-        public Polygon Intersection;
-
-        public Overlap(Triangle t, WideRay w, Polygon p, double s)
-        {
-            Triangle = t;
-            WideRay = w;
-            Intersection = p;
-            Square = s;
-        }
+        _triangles.clear();
+        _wideRays.clear();
+        _overlaps.clear();
+        _largest = null;
     }
 }
+
