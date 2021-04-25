@@ -10,6 +10,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.*;
 import model.Bounds;
@@ -21,19 +22,23 @@ import java.util.*;
 public class Main extends Application
 {
     Label clickInfo;
-    Surface model;
+    Surface surface;
     Canvas canvas;
     TextField numberOfTriangles;
     TextField numberOfWideRays;
     TextField filterOverlap;
+    TextField[] customTriangleCoordX;
+    TextField[] customTriangleCoordY;
+    Label addTriangleErrorMessage;
+    Label addWideRayErrorMessage;
+    Stage dialogStage;
+    Stage mainStage;
 
     @Override
     public void start(Stage stage) throws Exception
     {
-        model = new Surface();
-//        model.generateRandomTriangles(15, 100, 250);
-//        model.generateRandomWideRays(10, 50, 100);
-
+        mainStage = stage;
+        surface = new Surface();
         Scene scene = createScene();
         stage.setScene(scene);
         stage.show();
@@ -42,6 +47,7 @@ public class Main extends Application
     private Scene createScene()
     {
         GridPane grid = new GridPane();
+
 
         ScrollPane canvas = getCanvasPane();
         Pane control = getControlPanel(grid);
@@ -134,8 +140,12 @@ public class Main extends Application
 
         Button execute = new Button("Выполнить");
         Button clear = new Button("Очистить");
+
         execute.setOnAction(this::generateTrianglesButtonAction);
         clear.setOnAction(this::clearTrianglesButtonAction);
+
+        Button addCustom = new Button("Ввести вручную");
+        addCustom.setOnAction(this::enterCustomTriangle);
 
         clear.prefWidthProperty().bind(execute.widthProperty());
 
@@ -143,6 +153,8 @@ public class Main extends Application
         grid.add(secondLine, 0, 1);
         grid.add(execute, 1, 0);
         grid.add(clear, 1, 1);
+        grid.add(addCustom, 0, 2, 2, 1);
+
 
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setHgrow(Priority.ALWAYS);
@@ -152,6 +164,11 @@ public class Main extends Application
         TitledPane pane = new TitledPane("Треугольники", grid);
         pane.setMinWidth(350);
         return pane;
+    }
+
+    private void enterCustomTriangle(ActionEvent actionEvent)
+    {
+        showCustomTriangleDialog(mainStage);
     }
 
     private TitledPane createWideRaysPane()
@@ -176,11 +193,15 @@ public class Main extends Application
         execute.setOnAction(this::generateWideRaysButtonAction);
         clear.setOnAction(this::clearWideRaysButtonAction);
 
+        Button addCustom = new Button("Ввести вручную");
+        addCustom.setOnAction(this::enterCustomWideRay);
+
         clear.prefWidthProperty().bind(execute.widthProperty());
 
         grid.add(firstLine, 0, 0, 1, 2);
         grid.add(execute, 1, 0);
         grid.add(clear, 1, 1);
+        grid.add(addCustom, 0, 2, 2, 1);
 
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setHgrow(Priority.ALWAYS);
@@ -190,6 +211,11 @@ public class Main extends Application
         TitledPane pane = new TitledPane("Широкий луч", grid);
         pane.setMinWidth(350);
         return pane;
+    }
+
+    private void enterCustomWideRay(ActionEvent actionEvent)
+    {
+        showCustomWideRayDialog(mainStage);
     }
 
     private TitledPane createImportExportPane()
@@ -243,19 +269,19 @@ public class Main extends Application
 
     private void solveButtonAction(ActionEvent actionEvent)
     {
-        model.computeIntersections();
+        surface.computeIntersections();
         draw();
     }
 
     private void clearButtonAction(ActionEvent actionEvent)
     {
-        model.clear();
+        surface.clear();
         draw();
     }
 
     private void clearTrianglesButtonAction(ActionEvent actionEvent)
     {
-        model.getTriangles().clear();
+        surface.getTriangles().clear();
         draw();
     }
 
@@ -263,13 +289,13 @@ public class Main extends Application
     {
         String text = numberOfTriangles.getText();
         int n = Integer.parseInt(text);
-        model.generateRandomTriangles(n, 300, 500);
+        surface.generateRandomTriangles(n, 300, 500);
         draw();
     }
 
     private void clearWideRaysButtonAction(ActionEvent actionEvent)
     {
-        model.getWideRays().clear();
+        surface.getWideRays().clear();
         draw();
     }
 
@@ -277,20 +303,180 @@ public class Main extends Application
     {
         String text = numberOfWideRays.getText();
         int n = Integer.parseInt(text);
-        model.generateRandomWideRays(n, 50, 250);
+        surface.generateRandomWideRays(n, 50, 250);
         draw();
+    }
+
+    private void showCustomTriangleDialog(Stage parentStage)
+    {
+        dialogStage = new Stage();
+        GridPane grid = new GridPane();
+        int n = 3;
+        TextField[] coordsX = new TextField[n];
+        TextField[] coordsY = new TextField[n];
+
+        grid.setHgap(20);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 10, 20, 10));
+
+        for (int i = 0; i < n; i++)
+        {
+            grid.add(new Label(MessageFormat.format("Добавьте {0}-ю координату:", i + 1)), 0, i);
+
+            coordsX[i] = new TextField();
+            coordsX[i].setMaxWidth(60);
+            HBox firstCoord = new HBox(new Label("X:"), coordsX[i]);
+            firstCoord.setSpacing(5);
+            firstCoord.setAlignment(Pos.BASELINE_LEFT);
+            grid.add(firstCoord, 1, i);
+
+            coordsY[i] = new TextField();
+            coordsY[i].setMaxWidth(60);
+            HBox secondCoord = new HBox(new Label("Y:"), coordsY[i]);
+            secondCoord.setSpacing(5);
+            secondCoord.setAlignment(Pos.BASELINE_LEFT);
+            grid.add(secondCoord, 2, i);
+        }
+
+        addTriangleErrorMessage = new Label("");
+        addTriangleErrorMessage.setTextFill(Color.RED);
+        grid.add(addTriangleErrorMessage, 0, n, 2, 1);
+
+        Button addTriangle = new Button("Добавить");
+        addTriangle.setOnAction(this::addCustomTriangle);
+        grid.add(addTriangle, 2, n);
+
+        customTriangleCoordX = coordsX;
+        customTriangleCoordY = coordsY;
+
+
+        dialogStage.setScene(new Scene(grid));
+        dialogStage.setTitle("Добавление треугольника");
+        dialogStage.initModality(Modality.WINDOW_MODAL);
+        dialogStage.initOwner(parentStage);
+        dialogStage.setResizable(false);
+        dialogStage.show();
+    }
+
+    private void addCustomTriangle(ActionEvent actionEvent)
+    {
+        addTriangleErrorMessage.setText(null);
+        Point[] p = new Point[3];
+
+        for (int i = 0; i < 3; i++)
+        {
+            try
+            {
+                double x = Double.parseDouble(customTriangleCoordX[i].getText());
+                double y = Double.parseDouble(customTriangleCoordY[i].getText());
+                p[i] = new Point(x, y);
+            }
+            catch (NumberFormatException e)
+            {
+                addTriangleErrorMessage.setText(
+                        MessageFormat.format("Ошибка: {0}", e.getMessage()));
+                return;
+            }
+        }
+
+        Triangle triangle = Triangle.create(p[0], p[1], p[2]);
+        if(triangle == null)
+        {
+            addTriangleErrorMessage.setText("Ошибка: невозможный треугольник");
+            return;
+        }
+        surface.add(triangle);
+        draw();
+        dialogStage.close();
+    }
+
+    private void showCustomWideRayDialog(Stage parentStage)
+    {
+        dialogStage = new Stage();
+        GridPane grid = new GridPane();
+        int n = 2;
+        TextField[] coordsX = new TextField[n];
+        TextField[] coordsY = new TextField[n];
+
+        grid.setHgap(20);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 10, 20, 10));
+
+        for (int i = 0; i < n; i++)
+        {
+            grid.add(new Label(MessageFormat.format("Добавьте {0}-ю координату:", i + 1)), 0, i);
+
+            coordsX[i] = new TextField();
+            coordsX[i].setMaxWidth(60);
+            HBox firstCoord = new HBox(new Label("X:"), coordsX[i]);
+            firstCoord.setSpacing(5);
+            firstCoord.setAlignment(Pos.BASELINE_LEFT);
+            grid.add(firstCoord, 1, i);
+
+            coordsY[i] = new TextField();
+            coordsY[i].setMaxWidth(60);
+            HBox secondCoord = new HBox(new Label("Y:"), coordsY[i]);
+            secondCoord.setSpacing(5);
+            secondCoord.setAlignment(Pos.BASELINE_LEFT);
+            grid.add(secondCoord, 2, i);
+        }
+
+        addWideRayErrorMessage = new Label("");
+        addWideRayErrorMessage.setTextFill(Color.RED);
+        grid.add(addTriangleErrorMessage, 0, n, 2, 1);
+
+        Button addWideRay = new Button("Добавить");
+        addWideRay.setOnAction(this::addCustomWideRay);
+        grid.add(addWideRay, 2, n);
+
+        customTriangleCoordX = coordsX;
+        customTriangleCoordY = coordsY;
+
+        dialogStage.setScene(new Scene(grid));
+        dialogStage.setTitle("Добавление широкого луча");
+        dialogStage.initModality(Modality.WINDOW_MODAL);
+        dialogStage.initOwner(parentStage);
+        dialogStage.setResizable(false);
+        dialogStage.show();
+    }
+
+    private void addCustomWideRay(ActionEvent actionEvent)
+    {
+        addWideRayErrorMessage.setText(null);
+        Point[] p = new Point[2];
+
+        for (int i = 0; i < 2; i++)
+        {
+            try
+            {
+                double x = Double.parseDouble(customTriangleCoordX[i].getText());
+                double y = Double.parseDouble(customTriangleCoordY[i].getText());
+                p[i] = new Point(x, y);
+            }
+            catch (NumberFormatException e)
+            {
+                addWideRayErrorMessage.setText(
+                        MessageFormat.format("Ошибка: {0}", e.getMessage()));
+                return;
+            }
+        }
+
+        WideRay wideRay = new WideRay(p[0], p[1]);
+        surface.add(wideRay);
+        draw();
+        dialogStage.close();
     }
 
 
     private void draw()
     {
         GraphicsContext gr = canvas.getGraphicsContext2D();
-        Bounds bounds = model.getBounds();
+        Bounds bounds = surface.getBounds();
 
         gr.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
         gr.setLineWidth(1);
         gr.setStroke(Color.valueOf("#FF00FF"));
-        for (Triangle t : model.getTriangles())
+        for (Triangle t : surface.getTriangles())
         {
             for (Vector v : t.getVectors())
             {
@@ -299,7 +485,7 @@ public class Main extends Application
         }
 
         gr.setStroke(Color.valueOf("#0000ff"));
-        for (WideRay w : model.getWideRays())
+        for (WideRay w : surface.getWideRays())
         {
             for (Vector v : w.getVectors())
             {
@@ -317,10 +503,10 @@ public class Main extends Application
         }
 
         gr.setFill(Color.valueOf("#FE6F7E20"));
-        for (int j = 0; j < model.getOverlaps().size(); j++)
+        for (int j = 0; j < surface.getOverlaps().size(); j++)
         {
-            Overlap o = model.getOverlaps().get(j);
-            if (o == model.getLargestOverlap())
+            Overlap o = surface.getOverlaps().get(j);
+            if (o == surface.getLargestOverlap())
             {
                 continue;
             }
@@ -351,8 +537,8 @@ public class Main extends Application
         }
 
         gr.setFill(Color.valueOf("#FE6A76"));
-        Overlap o = model.getLargestOverlap();
-        if(o != null)
+        Overlap o = surface.getLargestOverlap();
+        if (o != null)
         {
             List<Vector> vectors = o.Intersection.getVectors();
             double[] xx = new double[vectors.size()];
