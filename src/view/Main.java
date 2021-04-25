@@ -10,12 +10,14 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.*;
 import model.Bounds;
 import model.Vector;
 
+import java.io.File;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -220,15 +222,45 @@ public class Main extends Application
 
     private TitledPane createImportExportPane()
     {
-        VBox buttons = new VBox(
-                new Button("Загрузить из файла"),
-                new Button("Сохранить в файл"));
+        Button saveToFile = new Button("Сохранить в файл");
+        Button loadFromFile = new Button("Загрузить из файла");
+        VBox buttons = new VBox(loadFromFile, saveToFile);
+        
+        saveToFile.setOnAction(this::saveToFileAction);
+        loadFromFile.setOnAction(this::loadFromFileAction);
 
         buttons.setSpacing(10);
         buttons.setAlignment(Pos.CENTER);
         buttons.setPadding(new Insets(20, 10, 20, 10));
 
         return new TitledPane("Импорт и экспорт", buttons);
+    }
+
+    private void saveToFileAction(ActionEvent actionEvent)
+    {
+        FileChooser fc = new FileChooser();
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("json", "*.json");
+        fc.getExtensionFilters().add(extFilter);
+
+        File file = fc.showSaveDialog(mainStage);
+        if(file != null)
+        {
+            surface.saveToFile(file);
+        }
+    }
+
+    private void loadFromFileAction(ActionEvent actionEvent)
+    {
+        FileChooser fc = new FileChooser();
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("json", "*.json");
+        fc.getExtensionFilters().add(extFilter);
+
+        File file = fc.showOpenDialog(mainStage);
+        if(file != null)
+        {
+            surface.loadFromFile(file);
+            draw();
+        }
     }
 
     private TitledPane createInformationPane()

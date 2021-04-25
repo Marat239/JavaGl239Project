@@ -1,5 +1,6 @@
 package model;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -129,6 +130,22 @@ public class Surface
         _wideRays.clear();
         _overlaps.clear();
         _largest = null;
+    }
+
+    public void saveToFile(File file)
+    {
+        //JsonbBuilder
+        //доделать
+    }
+
+    public void loadFromFile(File file)
+    {
+        //доделать
+        clear();
+        add(Triangle.create(
+                new Point(0,0),
+                new Point(100,200),
+                new Point(200,100)));
     }
 }
 
