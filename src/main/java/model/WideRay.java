@@ -9,6 +9,10 @@ public class WideRay extends Polygon
         this(new Vector(p1, p2));
     }
 
+    public WideRay()
+    {
+    }
+
     public WideRay(Vector v)
     {
         addVector(v);

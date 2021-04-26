@@ -1,7 +1,12 @@
 package model;
 
-import java.io.File;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
+import java.io.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import static model.Shared.InfiniteLen;
@@ -9,7 +14,9 @@ import static model.Shared.InfiniteLen;
 public class Surface
 {
     private final ArrayList<Triangle> _triangles = new ArrayList<>();
+
     private final ArrayList<WideRay> _wideRays = new ArrayList<>();
+
     private final ArrayList<Overlap> _overlaps = new ArrayList<>();
     private Overlap _largest = null;
 
@@ -33,11 +40,13 @@ public class Surface
         return _wideRays;
     }
 
+    @JsonIgnore
     public List<Overlap> getOverlaps()
     {
         return _overlaps;
     }
 
+    @JsonIgnore
     public Overlap getLargestOverlap()
     {
         return _largest;
@@ -65,7 +74,8 @@ public class Surface
 
     public void computeIntersections()
     {
-        _overlaps.clear();
+        clearIntersections();
+
         for (Triangle t : getTriangles())
         {
             for (WideRay w : getWideRays())
@@ -78,7 +88,6 @@ public class Surface
             }
         }
 
-        _largest = null;
         for (Overlap o : _overlaps)
         {
             if(_largest == null || _largest.Square < o.Square)
@@ -86,8 +95,23 @@ public class Surface
                 _largest = o;
             }
         }
+
+        _overlaps.sort(Comparator.comparingDouble(x -> x.Square));
     }
 
+    public void clearIntersections()
+    {
+        _overlaps.clear();
+        _largest = null;
+
+    }
+    @JsonIgnore
+    public boolean isEmpty()
+    {
+        return getTriangles().isEmpty() && getWideRays().isEmpty();
+    }
+
+    @JsonIgnore
     public Bounds getBounds()
     {
         Bounds bb = new Bounds(InfiniteLen, InfiniteLen, 0, 0);
@@ -132,20 +156,43 @@ public class Surface
         _largest = null;
     }
 
-    public void saveToFile(File file)
+    public boolean saveToFile(File file)
     {
-        //JsonbBuilder
-        //доделать
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+
+        try
+        {
+            mapper.writeValue(file, this);
+        }
+        catch(Exception e)
+        {
+            return false;
+        }
+
+        return true;
     }
 
-    public void loadFromFile(File file)
+    public boolean loadFromFile(File file)
     {
-        //доделать
-        clear();
-        add(Triangle.create(
-                new Point(0,0),
-                new Point(100,200),
-                new Point(200,100)));
+        try
+        {
+            ObjectMapper mapper = new ObjectMapper();
+            Surface surface = mapper.readValue(file, Surface.class);
+
+            clear();
+
+            _triangles.addAll(surface._triangles);
+            _wideRays.addAll(surface._wideRays);
+
+            clearIntersections();
+        }
+        catch(IOException e)
+        {
+            return false;
+        }
+
+        return true;
     }
 }
 

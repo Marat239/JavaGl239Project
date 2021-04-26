@@ -1,5 +1,7 @@
 package model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -148,6 +150,7 @@ public class Polygon
         return nearest;
     }
 
+    @JsonIgnore
     public Bounds getBounds()
     {
         Bounds b = new Bounds(InfiniteLen, InfiniteLen, 0, 0);

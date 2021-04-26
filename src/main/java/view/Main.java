@@ -3,6 +3,7 @@ package view;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.geometry.*;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -44,14 +45,14 @@ public class Main extends Application
         Scene scene = createScene();
         stage.setScene(scene);
         stage.show();
+        draw();
     }
 
     private Scene createScene()
     {
         GridPane grid = new GridPane();
 
-
-        ScrollPane canvas = getCanvasPane();
+        Node canvas = getCanvasPane();
         Pane control = getControlPanel(grid);
         grid.add(canvas, 0, 0);
         grid.add(control, 1, 0);
@@ -62,32 +63,32 @@ public class Main extends Application
         ColumnConstraints col2 = new ColumnConstraints();
         col2.setMinWidth(control.getMinWidth());
         grid.getColumnConstraints().addAll(col1, col2);
-
         return new Scene(grid, 1200, 800);
     }
 
-    private ScrollPane getCanvasPane()
+
+    private Node getCanvasPane()
     {
         canvas = new Canvas();
-        ScrollPane pane = new ScrollPane(canvas);
+        //ScrollPane pane = new ScrollPane(canvas);
 
-        pane.setContent(canvas);
+        var pane = new Pane(canvas);
+        pane.setBorder(new Border(new BorderStroke(Color.GRAY,
+                BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+
         canvas.setOnMouseClicked(this::mouseClicked);
-
-        draw();
 
         pane.heightProperty().addListener(evt ->
         {
-            canvas.setHeight(pane.getHeight() * 2);
+            canvas.setHeight(pane.getHeight());
             draw();
         });
 
         pane.widthProperty().addListener(evt ->
         {
-            canvas.setWidth(pane.getWidth() * 2);
+            canvas.setWidth(pane.getWidth());
             draw();
         });
-
         return pane;
     }
 
@@ -225,7 +226,7 @@ public class Main extends Application
         Button saveToFile = new Button("Сохранить в файл");
         Button loadFromFile = new Button("Загрузить из файла");
         VBox buttons = new VBox(loadFromFile, saveToFile);
-        
+
         saveToFile.setOnAction(this::saveToFileAction);
         loadFromFile.setOnAction(this::loadFromFileAction);
 
@@ -243,7 +244,7 @@ public class Main extends Application
         fc.getExtensionFilters().add(extFilter);
 
         File file = fc.showSaveDialog(mainStage);
-        if(file != null)
+        if (file != null)
         {
             surface.saveToFile(file);
         }
@@ -256,7 +257,7 @@ public class Main extends Application
         fc.getExtensionFilters().add(extFilter);
 
         File file = fc.showOpenDialog(mainStage);
-        if(file != null)
+        if (file != null)
         {
             surface.loadFromFile(file);
             draw();
@@ -402,8 +403,7 @@ public class Main extends Application
                 double x = Double.parseDouble(customTriangleCoordX[i].getText());
                 double y = Double.parseDouble(customTriangleCoordY[i].getText());
                 p[i] = new Point(x, y);
-            }
-            catch (NumberFormatException e)
+            } catch (NumberFormatException e)
             {
                 addTriangleErrorMessage.setText(
                         MessageFormat.format("Ошибка: {0}", e.getMessage()));
@@ -412,14 +412,14 @@ public class Main extends Application
         }
 
         Triangle triangle = Triangle.create(p[0], p[1], p[2]);
-        if(triangle == null)
+        if (triangle == null)
         {
             addTriangleErrorMessage.setText("Ошибка: невозможный треугольник");
             return;
         }
         surface.add(triangle);
-        draw();
         dialogStage.close();
+        draw();
     }
 
     private void showCustomWideRayDialog(Stage parentStage)
@@ -455,7 +455,7 @@ public class Main extends Application
 
         addWideRayErrorMessage = new Label("");
         addWideRayErrorMessage.setTextFill(Color.RED);
-        grid.add(addTriangleErrorMessage, 0, n, 2, 1);
+        grid.add(addWideRayErrorMessage, 0, n, 2, 1);
 
         Button addWideRay = new Button("Добавить");
         addWideRay.setOnAction(this::addCustomWideRay);
@@ -484,8 +484,7 @@ public class Main extends Application
                 double x = Double.parseDouble(customTriangleCoordX[i].getText());
                 double y = Double.parseDouble(customTriangleCoordY[i].getText());
                 p[i] = new Point(x, y);
-            }
-            catch (NumberFormatException e)
+            } catch (NumberFormatException e)
             {
                 addWideRayErrorMessage.setText(
                         MessageFormat.format("Ошибка: {0}", e.getMessage()));
@@ -500,100 +499,99 @@ public class Main extends Application
     }
 
 
+    private void drawPolygon(GraphicsContext gr, Polygon polygon, boolean fill, double k, double dx, double dy)
+    {
+        List<Vector> vectors = polygon.getVectors();
+        int size = vectors.size();
+
+        for (Vector v : vectors)
+        {
+            gr.strokeLine(
+                    (v.From.X + dx) * k, (v.From.Y + dy) * k,
+                    (v.To.X + dx) * k, (v.To.Y + dy) * k);
+        }
+
+        if (fill)
+        {
+            double[] xx = new double[size];
+            double[] yy = new double[size];
+
+            for (int i = 0; i < size; i++)
+            {
+                var v = vectors.get(i);
+
+                xx[i] = (v.From.X + dx) * k;
+                yy[i] = (v.From.Y + dy) * k;
+            }
+
+            gr.fillPolygon(xx, yy, vectors.size());
+        }
+    }
+
     private void draw()
     {
         GraphicsContext gr = canvas.getGraphicsContext2D();
-        Bounds bounds = surface.getBounds();
-
         gr.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        if (surface.isEmpty())
+        {
+            return;
+        }
+
+        Bounds bounds = surface.getBounds();
+        int padding = 10;
+
+        var kx = (canvas.getWidth() - 2 * padding) / (bounds.MaxX - bounds.MinX);
+        var ky = (canvas.getHeight() - 2 * padding) / (bounds.MaxY - bounds.MinY);
+        var k = Math.min(kx, ky);
+        var dx = -bounds.MinX + padding / k;
+        var dy = -bounds.MinY + padding / k;
+
         gr.setLineWidth(1);
         gr.setStroke(Color.valueOf("#FF00FF"));
         for (Triangle t : surface.getTriangles())
         {
-            for (Vector v : t.getVectors())
-            {
-                gr.strokeLine(v.From.X, v.From.Y, v.To.X, v.To.Y);
-            }
+            drawPolygon(gr, t, false, k, dx, dy);
         }
 
         gr.setStroke(Color.valueOf("#0000ff"));
         for (WideRay w : surface.getWideRays())
         {
-            for (Vector v : w.getVectors())
-            {
-                gr.strokeLine(v.From.X, v.From.Y, v.To.X, v.To.Y);
-            }
+            drawPolygon(gr, w, false, k, dx, dy);
         }
 
         gr.setLineWidth(2);
         gr.setStroke(Color.valueOf("#FF0000"));
 
+        if (surface.getOverlaps().size() == 0)
+        {
+            return;
+        }
+
+        // continue if the task is solved
         int filter = -1;
         if (filterOverlap != null && filterOverlap.getText().length() > 0)
         {
             filter = Integer.parseInt(filterOverlap.getText());
         }
 
-        gr.setFill(Color.valueOf("#FE6F7E20"));
-        for (int j = 0; j < surface.getOverlaps().size(); j++)
+        if (filter == -1 || filter >= surface.getOverlaps().size())
         {
-            Overlap o = surface.getOverlaps().get(j);
-            if (o == surface.getLargestOverlap())
+            // draw all
+            // last one is the largest
+            gr.setFill(Color.valueOf("#FE6F7E20"));
+            for (int i = 0; i < surface.getOverlaps().size() - 1; i++)
             {
-                continue;
+                drawPolygon(gr, surface.getOverlaps().get(i).Intersection, true, k, dx, dy);
             }
 
-            if (filter > -1 && filter != j)
-            {
-                continue;
-            }
-
-            List<Vector> vectors = o.Intersection.getVectors();
-            double[] xx = new double[vectors.size()];
-            double[] yy = new double[vectors.size()];
-            for (int i = 0; i < vectors.size(); i++)
-            {
-                var v = vectors.get(i);
-
-                xx[i] = v.From.X;
-                yy[i] = v.From.Y;
-            }
-
-            gr.fillPolygon(xx, yy, vectors.size());
-
-            for (int i = 0; i < vectors.size(); i++)
-            {
-                var v = vectors.get(i);
-                gr.strokeLine(v.From.X, v.From.Y, v.To.X, v.To.Y);
-            }
+            gr.setFill(Color.valueOf("#FE6A76"));
+            drawPolygon(gr, surface.getLargestOverlap().Intersection, true, k, dx, dy);
         }
-
-        gr.setFill(Color.valueOf("#FE6A76"));
-        Overlap o = surface.getLargestOverlap();
-        if (o != null)
+        else
         {
-            List<Vector> vectors = o.Intersection.getVectors();
-            double[] xx = new double[vectors.size()];
-            double[] yy = new double[vectors.size()];
-            for (int i = 0; i < vectors.size(); i++)
-            {
-                var v = vectors.get(i);
-
-                xx[i] = v.From.X;
-                yy[i] = v.From.Y;
-            }
-
-            gr.fillPolygon(xx, yy, vectors.size());
-
-            for (int i = 0; i < vectors.size(); i++)
-            {
-                var v = vectors.get(i);
-                gr.strokeLine(v.From.X, v.From.Y, v.To.X, v.To.Y);
-            }
+            gr.setFill(Color.valueOf("#FE6F7E20"));
+            drawPolygon(gr, surface.getOverlaps().get(filter).Intersection, true, k, dx, dy);
         }
-
-//        canvas.setWidth(bounds.MaxX - bounds.MinX);
-//        canvas.setHeight(bounds.MaxY - bounds.MinX);
     }
 
     private void mouseClicked(MouseEvent x)
@@ -606,11 +604,4 @@ public class Main extends Application
     {
         launch(args);
     }
-
-
-//        grid.setBackground(new Background(new BackgroundFill(
-//                Color.rgb(69, 99, 75),
-//                CornerRadii.EMPTY,
-//                Insets.EMPTY)));
-
 }

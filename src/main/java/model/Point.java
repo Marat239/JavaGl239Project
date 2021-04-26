@@ -9,6 +9,11 @@ public class Point
     public double X;
     public double Y;
 
+    // for deserialization
+    public Point()
+    {
+    }
+
     public Point(double x, double y)
     {
         X = x;

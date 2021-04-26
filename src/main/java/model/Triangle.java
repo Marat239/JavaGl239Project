@@ -4,6 +4,11 @@ import static model.Shared.Epsilon;
 
 public class Triangle extends Polygon
 {
+    //for json deserialization
+    public Triangle()
+    {
+    }
+
     private Triangle(Point p1, Point p2, Point p3)
     {
         addVector(new Vector(p1, p2));
