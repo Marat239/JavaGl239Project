@@ -18,16 +18,21 @@ public class Surface
     private final ArrayList<WideRay> _wideRays = new ArrayList<>();
 
     private final ArrayList<Overlap> _overlaps = new ArrayList<>();
+
     private Overlap _largest = null;
+
+    private ISurfaceEventHandler _changeHandler = null;
 
     public void add(Triangle t)
     {
         _triangles.add(t);
+        onChange();
     }
 
     public void add(WideRay w)
     {
         _wideRays.add(w);
+        onChange();
     }
 
     public List<Triangle> getTriangles()
@@ -59,6 +64,7 @@ public class Surface
             add(Triangle.createRandom(min, max));
         }
 
+        onChange();
         return getTriangles();
     }
 
@@ -69,6 +75,7 @@ public class Surface
             add(WideRay.createRandom(min, max));
         }
 
+        onChange();
         return getWideRays();
     }
 
@@ -97,14 +104,41 @@ public class Surface
         }
 
         _overlaps.sort(Comparator.comparingDouble(x -> x.Square));
+        onChange();
     }
 
     public void clearIntersections()
     {
         _overlaps.clear();
         _largest = null;
-
+        onChange();
     }
+
+    public void clearTriangles()
+    {
+        _triangles.clear();
+        onChange();
+    }
+
+    public void clearWideRays()
+    {
+        _wideRays.clear();
+        onChange();
+    }
+
+    public void setOnChange(ISurfaceEventHandler eventHandler)
+    {
+        _changeHandler = eventHandler;
+    }
+
+    private void onChange()
+    {
+        if(_changeHandler != null)
+        {
+            _changeHandler.onChange();
+        }
+    }
+
     @JsonIgnore
     public boolean isEmpty()
     {
@@ -154,6 +188,7 @@ public class Surface
         _wideRays.clear();
         _overlaps.clear();
         _largest = null;
+        onChange();
     }
 
     public boolean saveToFile(File file)

@@ -22,14 +22,14 @@ import java.io.File;
 import java.text.MessageFormat;
 import java.util.*;
 
-public class Main extends Application
+public class Main extends Application implements ISurfaceEventHandler
 {
     Label clickInfo;
     Surface surface;
     Canvas canvas;
     TextField numberOfTriangles;
     TextField numberOfWideRays;
-    TextField filterOverlap;
+    int filterOverlap;
     TextField[] customTriangleCoordX;
     TextField[] customTriangleCoordY;
     Label addTriangleErrorMessage;
@@ -37,15 +37,20 @@ public class Main extends Application
     Stage dialogStage;
     Stage mainStage;
 
+    Label trianglesCount;
+    Label wideRaysCount;
+    Label overlapsCount;
+    Label largestOverlapSquare;
+
     @Override
     public void start(Stage stage) throws Exception
     {
         mainStage = stage;
         surface = new Surface();
+        surface.setOnChange(this);
         Scene scene = createScene();
         stage.setScene(scene);
         stage.show();
-        draw();
     }
 
     private Scene createScene()
@@ -73,19 +78,17 @@ public class Main extends Application
         //ScrollPane pane = new ScrollPane(canvas);
 
         var pane = new Pane(canvas);
-        pane.setBorder(new Border(new BorderStroke(Color.GRAY,
-                BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+        pane.setBorder(new Border(
+                new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
 
         canvas.setOnMouseClicked(this::mouseClicked);
 
-        pane.heightProperty().addListener(evt ->
-        {
+        pane.heightProperty().addListener(evt -> {
             canvas.setHeight(pane.getHeight());
             draw();
         });
 
-        pane.widthProperty().addListener(evt ->
-        {
+        pane.widthProperty().addListener(evt -> {
             canvas.setWidth(pane.getWidth());
             draw();
         });
@@ -95,13 +98,7 @@ public class Main extends Application
 
     private Pane getControlPanel(Pane parent)
     {
-        TitledPane[] panes = new TitledPane[]
-                {
-                        createInformationPane(),
-                        createTrianglesPane(),
-                        createWideRaysPane(),
-                        createImportExportPane()
-                };
+        TitledPane[] panes = new TitledPane[]{createInformationPane(), createTrianglesPane(), createWideRaysPane(), createImportExportPane()};
 
         var pane = new Pane();
         Accordion accordion = new Accordion();
@@ -131,15 +128,10 @@ public class Main extends Application
         numberOfTriangles = new TextField();
         numberOfTriangles.setMaxWidth(60);
 
-        HBox firstLine = new HBox(
-                new Label("Добавить"),
-                numberOfTriangles,
-                new Label("треугольников"));
+        HBox firstLine = new HBox(new Label("Добавить"), numberOfTriangles, new Label("треугольников"));
 
         firstLine.setSpacing(10);
         firstLine.setAlignment(Pos.BASELINE_LEFT);
-
-        HBox secondLine = new HBox(new CheckBox("Без пересечений"));
 
         Button execute = new Button("Выполнить");
         Button clear = new Button("Очистить");
@@ -153,11 +145,9 @@ public class Main extends Application
         clear.prefWidthProperty().bind(execute.widthProperty());
 
         grid.add(firstLine, 0, 0);
-        grid.add(secondLine, 0, 1);
+        grid.add(addCustom, 0, 1);
         grid.add(execute, 1, 0);
         grid.add(clear, 1, 1);
-        grid.add(addCustom, 0, 2, 2, 1);
-
 
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setHgrow(Priority.ALWAYS);
@@ -184,10 +174,7 @@ public class Main extends Application
         numberOfWideRays = new TextField();
         numberOfWideRays.setMaxWidth(60);
 
-        HBox firstLine = new HBox(
-                new Label("Добавить"),
-                numberOfWideRays,
-                new Label("широких лучей"));
+        HBox firstLine = new HBox(new Label("Добавить"), numberOfWideRays, new Label("широких лучей"));
 
         firstLine.setSpacing(10);
         firstLine.setAlignment(Pos.BASELINE_LEFT);
@@ -201,10 +188,10 @@ public class Main extends Application
 
         clear.prefWidthProperty().bind(execute.widthProperty());
 
-        grid.add(firstLine, 0, 0, 1, 2);
+        grid.add(firstLine, 0, 0);
+        grid.add(addCustom, 0, 1);
         grid.add(execute, 1, 0);
         grid.add(clear, 1, 1);
-        grid.add(addCustom, 0, 2, 2, 1);
 
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setHgrow(Priority.ALWAYS);
@@ -260,62 +247,96 @@ public class Main extends Application
         if (file != null)
         {
             surface.loadFromFile(file);
-            draw();
         }
     }
 
     private TitledPane createInformationPane()
     {
-        filterOverlap = new TextField();
-        filterOverlap.setMaxWidth(30);
+        Button prevIntersection = new Button("<-");
+        Button nextIntersection = new Button("->");
         Button solveButton = new Button("Решить задачу");
         Button clearButton = new Button("Очистить всё");
+        solveButton.setPrefWidth(110);
+        clearButton.setPrefWidth(110);
+
+        prevIntersection.setOnAction(this::prevIntersectionAction);
+        nextIntersection.setOnAction(this::nextIntersectionAction);
+
         solveButton.setOnAction(this::solveButtonAction);
         clearButton.setOnAction(this::clearButtonAction);
 
-        HBox solveButtons = new HBox(filterOverlap, solveButton, clearButton);
+        HBox solveButtons = new HBox(solveButton, clearButton);
+        HBox choiceButtons = new HBox(prevIntersection, nextIntersection);
 
         solveButtons.setSpacing(10);
         solveButtons.setAlignment(Pos.CENTER);
-
-        HBox zoomButtons = new HBox(new Button("+"),
-                new Button("-"),
-                new Button("100%"));
-
-        zoomButtons.setSpacing(10);
-        zoomButtons.setAlignment(Pos.CENTER);
+        choiceButtons.setSpacing(10);
+        choiceButtons.setAlignment(Pos.CENTER);
 
         clickInfo = new Label();
+        trianglesCount = new Label();
+        wideRaysCount = new Label();
+        overlapsCount = new Label();
+        largestOverlapSquare = new Label();
+
         VBox lines = new VBox(
-                new HBox(new Label("Координаты:"), clickInfo),
-                new Label("Всего тругольников:"),
-                new Label("Всего лучей:"),
-                zoomButtons,
-                solveButtons);
+                new HBox(new Label("Координаты: "), clickInfo),
+                new HBox(new Label("Всего треугольников: "), trianglesCount),
+                new HBox(new Label("Всего лучей: "), wideRaysCount),
+                new HBox(new Label("Всего пересечений: "), overlapsCount),
+                new HBox(new Label("Максимальная площадь: "), largestOverlapSquare),
+                solveButtons,
+                choiceButtons);
 
         lines.setSpacing(10);
         lines.setAlignment(Pos.BASELINE_LEFT);
-        lines.setPadding(new Insets(20, 10, 20, 10));
+        lines.setPadding(new Insets(10, 10, 10, 10));
 
         return new TitledPane("Основное", lines);
     }
 
+    private void nextIntersectionAction(ActionEvent actionEvent)
+    {
+        if(filterOverlap < surface.getOverlaps().size() - 1)
+        {
+            filterOverlap++;
+        }
+        else
+        {
+            filterOverlap = 0;
+        }
+
+        onChange();
+    }
+
+    private void prevIntersectionAction(ActionEvent actionEvent)
+    {
+        if(filterOverlap > 0)
+        {
+            filterOverlap--;
+        }
+        else
+        {
+            filterOverlap = surface.getOverlaps().size() - 1;
+        }
+
+        onChange();
+    }
+
     private void solveButtonAction(ActionEvent actionEvent)
     {
+        filterOverlap = -1;
         surface.computeIntersections();
-        draw();
     }
 
     private void clearButtonAction(ActionEvent actionEvent)
     {
         surface.clear();
-        draw();
     }
 
     private void clearTrianglesButtonAction(ActionEvent actionEvent)
     {
-        surface.getTriangles().clear();
-        draw();
+        surface.clearTriangles();
     }
 
     private void generateTrianglesButtonAction(ActionEvent actionEvent)
@@ -323,13 +344,11 @@ public class Main extends Application
         String text = numberOfTriangles.getText();
         int n = Integer.parseInt(text);
         surface.generateRandomTriangles(n, 300, 500);
-        draw();
     }
 
     private void clearWideRaysButtonAction(ActionEvent actionEvent)
     {
-        surface.getWideRays().clear();
-        draw();
+        surface.clearWideRays();
     }
 
     private void generateWideRaysButtonAction(ActionEvent actionEvent)
@@ -337,7 +356,6 @@ public class Main extends Application
         String text = numberOfWideRays.getText();
         int n = Integer.parseInt(text);
         surface.generateRandomWideRays(n, 50, 250);
-        draw();
     }
 
     private void showCustomTriangleDialog(Stage parentStage)
@@ -405,8 +423,7 @@ public class Main extends Application
                 p[i] = new Point(x, y);
             } catch (NumberFormatException e)
             {
-                addTriangleErrorMessage.setText(
-                        MessageFormat.format("Ошибка: {0}", e.getMessage()));
+                addTriangleErrorMessage.setText(MessageFormat.format("Ошибка: {0}", e.getMessage()));
                 return;
             }
         }
@@ -419,7 +436,6 @@ public class Main extends Application
         }
         surface.add(triangle);
         dialogStage.close();
-        draw();
     }
 
     private void showCustomWideRayDialog(Stage parentStage)
@@ -486,18 +502,15 @@ public class Main extends Application
                 p[i] = new Point(x, y);
             } catch (NumberFormatException e)
             {
-                addWideRayErrorMessage.setText(
-                        MessageFormat.format("Ошибка: {0}", e.getMessage()));
+                addWideRayErrorMessage.setText(MessageFormat.format("Ошибка: {0}", e.getMessage()));
                 return;
             }
         }
 
         WideRay wideRay = new WideRay(p[0], p[1]);
         surface.add(wideRay);
-        draw();
         dialogStage.close();
     }
-
 
     private void drawPolygon(GraphicsContext gr, Polygon polygon, boolean fill, double k, double dx, double dy)
     {
@@ -506,9 +519,7 @@ public class Main extends Application
 
         for (Vector v : vectors)
         {
-            gr.strokeLine(
-                    (v.From.X + dx) * k, (v.From.Y + dy) * k,
-                    (v.To.X + dx) * k, (v.To.Y + dy) * k);
+            gr.strokeLine((v.From.X + dx) * k, (v.From.Y + dy) * k, (v.To.X + dx) * k, (v.To.Y + dy) * k);
         }
 
         if (fill)
@@ -568,13 +579,7 @@ public class Main extends Application
         }
 
         // continue if the task is solved
-        int filter = -1;
-        if (filterOverlap != null && filterOverlap.getText().length() > 0)
-        {
-            filter = Integer.parseInt(filterOverlap.getText());
-        }
-
-        if (filter == -1 || filter >= surface.getOverlaps().size())
+        if (filterOverlap == -1)
         {
             // draw all
             // last one is the largest
@@ -589,8 +594,15 @@ public class Main extends Application
         }
         else
         {
-            gr.setFill(Color.valueOf("#FE6F7E20"));
-            drawPolygon(gr, surface.getOverlaps().get(filter).Intersection, true, k, dx, dy);
+            if(filterOverlap == surface.getOverlaps().size() - 1)
+            {
+                gr.setFill(Color.valueOf("#FE6F7E"));
+            }
+            else
+            {
+                gr.setFill(Color.valueOf("#FE6F7E20"));
+            }
+            drawPolygon(gr, surface.getOverlaps().get(filterOverlap).Intersection, true, k, dx, dy);
         }
     }
 
@@ -603,5 +615,20 @@ public class Main extends Application
     public static void main(String[] args)
     {
         launch(args);
+    }
+
+    @Override
+    public void onChange()
+    {
+        draw();
+        trianglesCount.setText(String.valueOf(surface.getTriangles().size()));
+        wideRaysCount.setText(String.valueOf(surface.getWideRays().size()));
+        overlapsCount.setText(String.valueOf(surface.getOverlaps().size()));
+
+        if (surface.getOverlaps().size() > 0)
+        {
+            largestOverlapSquare.setText(String.valueOf(surface.getLargestOverlap().Square));
+        }
+
     }
 }
