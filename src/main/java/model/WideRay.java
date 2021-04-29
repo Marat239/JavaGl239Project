@@ -9,10 +9,6 @@ public class WideRay extends Polygon
         this(new Vector(p1, p2));
     }
 
-    public WideRay()
-    {
-    }
-
     public WideRay(Vector v)
     {
         addVector(v);
@@ -22,6 +18,16 @@ public class WideRay extends Polygon
         addVector(backSide);
         Vector ray2 = new Vector(backSide.To, v.From);
         addVector(ray2);
+    }
+
+    public static WideRay create(Vector v)
+    {
+        if(v.From.equals(v.To))
+        {
+            return null;
+        }
+
+        return new WideRay(v);
     }
 
     public static WideRay createRandom()
@@ -56,7 +62,7 @@ public class WideRay extends Polygon
             }
         }
 
-        return new WideRay(p1, p2);
+        return WideRay.create(new Vector(p1, p2));
     }
 
     public Bounds getBounds()

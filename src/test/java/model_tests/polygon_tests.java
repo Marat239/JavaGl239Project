@@ -1,4 +1,4 @@
-package model_tests;
+/*package model_tests;
 
 import model.*;
 import org.junit.Assert;
@@ -425,4 +425,4 @@ public class polygon_tests
             Assert.assertEquals(points.get(i).Y, polygon.getVectors().get(i).From.Y, Epsilon);
         }
     }
-}
+}*/

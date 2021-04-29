@@ -9,11 +9,6 @@ public class Vector
     public Point From;
     public Point To;
 
-    // for deserialization
-    public Vector()
-    {
-    }
-
     public Vector(Point from, Point to)
     {
         From = from;

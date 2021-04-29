@@ -507,7 +507,12 @@ public class Main extends Application implements ISurfaceEventHandler
             }
         }
 
-        WideRay wideRay = new WideRay(p[0], p[1]);
+        WideRay wideRay = WideRay.create(new Vector(p[0], p[1]));
+        if(wideRay == null)
+        {
+            addWideRayErrorMessage.setText("Ошибка: невозможный широкий луч");
+            return;
+        }
         surface.add(wideRay);
         dialogStage.close();
     }
